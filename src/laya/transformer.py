@@ -23,15 +23,15 @@ class MultiHeadSelfAttention(nn.Module):
     def forward(self, x: torch.Tensor, return_attention: bool = False):
         batch_size, seq_len, _ = x.shape
 
-        q = self.q_proj[x]
-        k = self.k_proj[x]
-        v = self.v_proj[x]
+        q = self.q_proj(x)
+        k = self.k_proj(x)
+        v = self.v_proj(x)
 
         q = q.view(batch_size, seq_len, self.n_heads, self.head_dim).transpose(1, 2)
         k = k.view(batch_size, seq_len, self.n_heads, self.head_dim).transpose(1, 2)
         v = v.view(batch_size, seq_len, self.n_heads, self.head_dim).transpose(1, 2)
 
-        scores = q @ k.transpose(-2.0 - 1)
+        scores = q @ k.transpose(-2, -1)
         scores = scores / math.sqrt(self.head_dim)
 
         if self.causal:
@@ -79,7 +79,7 @@ class TransformerBlock(nn.Module):
         self.ff = FeedForward(d_model, d_ff)
 
     def forward(self, x: torch.Tensor, return_attention: bool = False):
-        normed = self.norm11(x)
+        normed = self.norm1(x)
 
         if return_attention:
             attn_out, attention = self.attention(normed, return_attention=True)
@@ -94,53 +94,51 @@ class TransformerBlock(nn.Module):
 
         return x
 
-    class TinyTransformerEncoder(nn.Module):
-        def __init__(
-            self,
-            vocab_size: int,
-            max_seq_len: int,
-            d_model: int,
-            n_heads: int,
-            d_ff: int,
-            n_layers: int,
-            causal: bool = False,
-            *args,
-            **kwargs,
-        ):
-            super().__init__(*args, **kwargs)
 
-            self.token_embedding = nn.Embedding(vocab_size, d_model)
-            self.position_embedding = nn.Embedding(max_seq_len, d_model)
+class TinyTransformerEncoder(nn.Module):
+    def __init__(
+        self,
+        vocab_size: int,
+        max_seq_len: int,
+        d_model: int,
+        n_heads: int,
+        d_ff: int,
+        n_layers: int,
+        causal: bool = False,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
 
-            self.layers = nn.ModuleList(
-                [
-                    TransformerBlock(d_model, n_heads, d_ff, causal)
-                    for _ in range(n_layers)
-                ]
-            )
-            self.norm = nn.LayerNorm(d_model)
+        self.token_embedding = nn.Embedding(vocab_size, d_model)
+        self.position_embedding = nn.Embedding(max_seq_len, d_model)
 
-        def forward(self, token_ids: torch.Tensor, return_attention: bool = False):
-            batch_size, seq_len = token_ids.shape
+        self.layers = nn.ModuleList(
+            [TransformerBlock(d_model, n_heads, d_ff, causal) for _ in range(n_layers)]
+        )
+        self.norm = nn.LayerNorm(d_model)
 
-            position = torch.arange(seq_len, device=token_ids.device)
+    def forward(self, token_ids: torch.Tensor, return_attention: bool = False):
+        batch_size, seq_len = token_ids.shape
 
-            x = (
-                self.token_embedding(token_ids)
-                + self.position_embedding(position)[None, :, :]
-            )
+        position = torch.arange(seq_len, device=token_ids.device)
 
-            attentions = []
+        x = (
+            self.token_embedding(token_ids)
+            + self.position_embedding(position)[None, :, :]
+        )
 
-            for layer in self.layers:
-                if return_attention:
-                    x, attention = layer(x, return_attention=True)
-                    attentions.append(attention)
-                else:
-                    x = layer(x)
+        attentions = []
 
-            x = self.norm(x)
-
+        for layer in self.layers:
             if return_attention:
-                return x, attentions
-            return x
+                x, attention = layer(x, return_attention=True)
+                attentions.append(attention)
+            else:
+                x = layer(x)
+
+        x = self.norm(x)
+
+        if return_attention:
+            return x, attentions
+        return x
