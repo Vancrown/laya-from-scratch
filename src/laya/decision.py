@@ -15,7 +15,7 @@ class DecisionHead(nn.Module):
 
     def forward(self, x: torch.Tensor):
         logits = self.net(x)
-        return logits.sequeeze(-1)
+        return logits.squeeze(-1)
 
 
 class TinyDecisionModel(nn.Module):
