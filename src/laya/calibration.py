@@ -4,16 +4,19 @@ import torch.nn.functional as F
 
 
 def accuracy(proba: torch.Tensor, targets: torch.Tensor):
+    #  large better
     pred = proba.argmax(dim=-1)
     return (pred == targets).float().mean()
 
 
 def neg_log_likelihood(proba: torch.Tensor, targets: torch.Tensor):
+    # small better
     target_proba = proba[torch.arange(targets.shape[0]), targets]
     return -torch.log(target_proba.clamp_min(1e-12)).mean()
 
 
 def brier_score(proba: torch.Tensor, targets: torch.Tensor):
+    #  small better
     target_on_hot = F.one_hot(targets, num_classes=proba.shape[-1]).float()
 
     error2 = (proba - target_on_hot).pow(2)

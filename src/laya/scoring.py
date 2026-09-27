@@ -17,6 +17,7 @@ def brier_score_reward(proba: torch.Tensor, outcomes: torch.Tensor):
 
 
 def spherical_score(proba: torch.Tensor, outcomes: torch.Tensor):
+    # outcome proba / L2 norm
     outcome_proba = proba.gather(dim=-1, index=outcomes.unsqueeze(-1)).squeeze(-1)
 
     norm = torch.linalg.vector_norm(proba, dim=-1).clamp_min(1e-12)
