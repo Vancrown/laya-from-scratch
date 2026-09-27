@@ -59,3 +59,37 @@ def contextual_rlcd_step(
     optimizer.step()
 
     return loss.item(), rewards.mean().item()
+
+
+def contextual_reward_step(
+    model: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    token_ids: torch.Tensor,
+    option_masks: torch.Tensor,
+    outcome: torch.Tensor,
+    reward_fn,
+    n_candidates: int = 16,
+    exploration_std: float = 0.5,
+):
+    base_logits, _ = model(token_ids=token_ids, option_mask=option_masks)
+
+    candidates = generate_candidates(base_logits, n_candidates, exploration_std)
+
+    proba = candidate_probabilities(candidates)
+
+    candidate_outcomes = outcome.expand(n_candidates, -1)
+
+    rewards = reward_fn(proba, candidate_outcomes)
+
+    advantages = rewards - rewards.mean(dim=0, keepdim=True)
+
+    distribution = torch.distributions.Normal(loc=base_logits, scale=exploration_std)
+    log_proba = distribution.log_prob(candidates).sum(dim=-1)
+
+    loss = -(advantages.detach() * log_proba).mean()
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    return loss.item(), rewards.mean().item()
