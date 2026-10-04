@@ -55,3 +55,22 @@ def expected_calibration_error(
 
         ece += bin_weight * torch.abs(bin_accuracy - bin_confidence)
     return ece
+
+
+class TemperatureScaler(nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.log_temperature = nn.Parameter(torch.zeros(()))
+
+    def forward(self, logits: torch.Tensor):
+        available = torch.isfinite(logits)
+
+        safe_logits = torch.where(available, logits, torch.zeros_like(logits))
+        scaled_logits = safe_logits / self.temperature
+
+        scaled_logits = scaled_logits.masked_fill(~available, float("-inf"))
+        return scaled_logits
+
+    @property
+    def temperature(self):
+        return self.log_temperature.exp()
