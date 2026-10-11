@@ -93,9 +93,7 @@ def grpo_step(
     clip_epsilon=0.2,
     kl_beta=0.01,
 ):
-    model.train()
-    model.backbone.eval()
-    model.decision_head.eval()
+    model.eval()
 
     current_logits, _, valid_option_mask = model(
         input_ids=input_ids,
