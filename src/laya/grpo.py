@@ -25,9 +25,9 @@ def generate_rollout(
     attention_mask,
     option_marker_mask,
     outcomes,
+    reward_fn,
     n_candidates=32,
     exploration_std=0.2,
-    scoring_weight=0.5,
 ):
     model.eval()
 
@@ -45,7 +45,7 @@ def generate_rollout(
 
     candidate_outcomes = outcomes.unsqueeze(0).expand(n_candidates, -1)
 
-    rewards = decision_reward(proba, candidate_outcomes, scoring_weight)
+    rewards = reward_fn(proba, candidate_outcomes)
     advantages = rewards - rewards.mean(dim=0, keepdim=True)
 
     old_log_proba = gaussian_log_prob(
