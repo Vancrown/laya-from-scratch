@@ -70,6 +70,8 @@ class DecisionPipeline:
         examples,
         confidence_threshold=0.75,
     ):
+        if not 0 <= confidence_threshold <= 1:
+            raise ValueError("Confidence threshold must be in [0, 1].")
         probabilities = self.predict_proba(examples)
 
         results = []

@@ -1,7 +1,7 @@
 [project]
 name = "laya-from-scratch"
 version = "0.1.0"
-description = "Add your description here"
+description = "Educational decision modeling with SFT, calibration, RLCD, and GRPO-style optimization"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -21,4 +21,4 @@ build-backend = "setuptools.build_meta"
 package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
-where = ["src/laya"]
+where = ["src"]

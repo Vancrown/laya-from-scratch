@@ -74,7 +74,7 @@ def decision_metrics(
     risk_cost = cost_matrix[targets, preds] * auto.to(proba.dtype)
 
     realized_utility = (
-        correct_reward * (auto & correct_reward).to(proba.dtype)
+        correct_reward * (auto & correct).to(proba.dtype)
         - risk_cost
         - review_cost * review.to(proba.dtype)
     )

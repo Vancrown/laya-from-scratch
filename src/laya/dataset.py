@@ -49,6 +49,8 @@ def format_decision_example(
 
 
 def encode_decision_batch(examples, tokenizer):
+    if not examples or any(not x["options"] for x in examples):
+        raise ValueError("Batch and option lists must be non-empty.")
     texts = [
         format_decision_example(
             context=x["context"],

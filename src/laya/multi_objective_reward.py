@@ -59,6 +59,7 @@ def expected_cost_decision(
     should_review = best_cost > review_cost
     return {
         "best_action": best_action,
-        "expected_cost": expected_cost,
+        "expected_cost": best_cost,
+        "expected_costs": expected_cost,
         "should_review": should_review,
     }
